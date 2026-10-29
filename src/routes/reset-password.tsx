@@ -23,7 +23,7 @@ function Reset() {
       <form className="w-full max-w-sm space-y-4" onSubmit={async (e) => {
         e.preventDefault();
         const { error } = await supabase.auth.updateUser({ password: pw });
-        if (error) return toast.error(error.message);
+        if (error) { toast.error(error.message); return; }
         toast.success("Senha atualizada."); navigate({ to: "/painel" });
       }}>
         <h1 className="text-2xl font-semibold">Nova senha</h1>
