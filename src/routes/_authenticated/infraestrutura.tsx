@@ -21,7 +21,7 @@ function Page() {
   const { can } = useAuth();
   const [nodes, setNodes] = useState<Tables<"drainage_nodes">[]>([]);
   const [links, setLinks] = useState<Tables<"drainage_links">[]>([]);
-  const [n, setN] = useState({ code: "", node_type: NODE_TYPES[0], latitude: "", longitude: "", cover_elev_m: "", invert_elev_m: "", vertical_datum: "", elev_method: "", data_quality: "pendente_validacao" });
+  const [n, setN] = useState({ code: "", node_type: "poço de visita", latitude: "", longitude: "", cover_elev_m: "", invert_elev_m: "", vertical_datum: "", elev_method: "", data_quality: "pendente_validacao" });
   const [l, setL] = useState({ code: "", from_node: "", to_node: "", length_m: "", material: "", diameter_mm: "", upstream_invert_m: "", downstream_invert_m: "", vertical_datum: "", elev_method: "", data_quality: "pendente_validacao" });
   const load = async () => {
     const [a, b] = await Promise.all([supabase.from("drainage_nodes").select("*").is("deleted_at", null).order("code"), supabase.from("drainage_links").select("*").is("deleted_at", null).order("code")]);
