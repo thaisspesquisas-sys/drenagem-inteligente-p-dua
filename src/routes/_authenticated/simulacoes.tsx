@@ -27,7 +27,7 @@ function Page() {
     e.preventDefault();
     const status = f.boundary_conditions ? "rascunho" : "aguardando_dados";
     const { error } = await supabase.from("simulation_runs").insert({ ...f, status });
-    if (error) return toast.error(error.message); toast.success("Cenário criado."); setF({ ...f, name: "", objective: "" }); load();
+    if (error) { toast.error(error.message); return; } toast.success("Cenário criado."); setF({ ...f, name: "", objective: "" }); load();
   };
   return (
     <>

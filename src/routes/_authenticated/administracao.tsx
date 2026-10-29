@@ -29,7 +29,7 @@ function Page() {
   const toggle = async (uid: string, role: AppRole, has: boolean) => {
     const { error } = has ? await supabase.from("user_roles").delete().eq("user_id", uid).eq("role", role)
       : await supabase.from("user_roles").insert({ user_id: uid, role, granted_by: user!.id });
-    if (error) return toast.error(error.message); load();
+    if (error) { toast.error(error.message); return; } load();
   };
   const saveMe = async (e: React.FormEvent) => {
     e.preventDefault();

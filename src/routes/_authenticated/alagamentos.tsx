@@ -21,7 +21,7 @@ const empty = { code: "", address: "", neighborhood: "", latitude: "", longitude
 function Page() {
   const { can } = useAuth();
   const [rows, setRows] = useState<Tables<"flood_events">[]>([]);
-  const [f, setF] = useState<Record<string, string>>(empty);
+  const [f, setF] = useState(empty);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [print, setPrint] = useState<Tables<"flood_events"> | null>(null);
@@ -34,7 +34,7 @@ function Page() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const lat = num(f.latitude), lon = num(f.longitude);
-    if (lat != null && (lat < -22.5 || lat > -20.5 || lon == null || lon < -43 || lon > -41.5)) return toast.error("Coordenadas fora da região de Santo Antônio de Pádua (SIRGAS 2000, graus decimais).");
+    if (lat != null && (lat < -22.5 || lat > -20.5 || lon == null || lon < -43 || lon > -41.5)) { toast.error("Coordenadas fora da região de Santo Antônio de Pádua (SIRGAS 2000, graus decimais)."); return; }
     const { error } = await supabase.from("flood_events").insert({
       code: f.code, address: f.address || null, neighborhood: f.neighborhood || null, latitude: lat, longitude: lon,
       coord_method: f.coord_method, occurred_at: f.occurred_at ? new Date(f.occurred_at).toISOString() : null,
@@ -42,10 +42,10 @@ function Page() {
       river_condition: f.river_condition || null, obstructions: f.obstructions || null, damages: f.damages || null,
       cause_hypothesis: f.cause_hypothesis || null, data_quality: f.data_quality as never, diagnosis_status: f.diagnosis_status, notes: f.notes || null,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Ocorrência registrada."); setF(empty); setOpen(false); load();
   };
-  const field = (k: string, label: string, type = "text", step?: string) => (
+  const field = (k: keyof typeof empty, label: string, type = "text", step?: string) => (
     <div><Label className="text-xs">{label}</Label><Input type={type} step={step} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} required={k === "code"} /></div>
   );
   const shown = rows.filter((r) => !q || [r.code, r.address, r.neighborhood].join(" ").toLowerCase().includes(q.toLowerCase()));

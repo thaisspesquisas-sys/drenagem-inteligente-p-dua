@@ -24,8 +24,8 @@ function Page() {
   useEffect(() => { load(); }, []);
   const save = async (id: string) => {
     const patch = Object.fromEntries(Object.entries(draft).map(([k, v]) => [k, v === "" ? null : v]));
-    const { error } = await supabase.from("data_sources").update(patch).eq("id", id);
-    if (error) return toast.error(error.message); toast.success("Metadados atualizados."); setEdit(null); load();
+    const { error } = await supabase.from("data_sources").update(patch as never).eq("id", id);
+    if (error) { toast.error(error.message); return; } toast.success("Metadados atualizados."); setEdit(null); load();
   };
   return (
     <>

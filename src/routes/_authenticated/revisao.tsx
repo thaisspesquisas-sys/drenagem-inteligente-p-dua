@@ -32,14 +32,14 @@ function Page() {
   const request = async () => {
     const t = targets.find((x) => x.id === pick); if (!t) return;
     const { error } = await supabase.from("technical_reviews").insert({ target_table: t.table, target_id: t.id });
-    if (error) return toast.error(error.message); toast.success("Revisão solicitada."); load();
+    if (error) { toast.error(error.message); return; } toast.success("Revisão solicitada."); load();
   };
   const decide = async (r: Tables<"technical_reviews">, decision: string) => {
-    if (!comment[r.id]) return toast.error("Registre o parecer técnico antes de decidir.");
+    if (!comment[r.id]) { toast.error("Registre o parecer técnico antes de decidir."); return; }
     const { data: prof } = await supabase.from("profiles").select("crea").eq("id", user!.id).maybeSingle();
-    if (decision === "aprovado" && !prof?.crea) return toast.error("Cadastre seu número de CREA no perfil (Administração) antes de aprovar.");
-    const { error } = await supabase.from("technical_reviews").update({ decision, comments: comment[r.id], reviewer: user!.id, reviewer_crea: prof?.crea ?? null, decided_at: new Date().toISOString() }).eq("id", r.id);
-    if (error) return toast.error(error.message); toast.success("Decisão registrada."); load();
+    if (decision === "aprovado" && !prof?.crea) { toast.error("Cadastre seu número de CREA no perfil (Administração) antes de aprovar."); return; }
+    const { error } = await supabase.from("technical_reviews").update({ decision, comments: comment[r.id] ?? null, reviewer: user!.id, reviewer_crea: prof?.crea ?? null, decided_at: new Date().toISOString() }).eq("id", r.id);
+    if (error) { toast.error(error.message); return; } toast.success("Decisão registrada."); load();
   };
   return (
     <>

@@ -21,8 +21,8 @@ function Page() {
   const { can } = useAuth();
   const [nodes, setNodes] = useState<Tables<"drainage_nodes">[]>([]);
   const [links, setLinks] = useState<Tables<"drainage_links">[]>([]);
-  const [n, setN] = useState<Record<string, string>>({ code: "", node_type: NODE_TYPES[0], latitude: "", longitude: "", cover_elev_m: "", invert_elev_m: "", vertical_datum: "", elev_method: "", data_quality: "pendente_validacao" });
-  const [l, setL] = useState<Record<string, string>>({ code: "", from_node: "", to_node: "", length_m: "", material: "", diameter_mm: "", upstream_invert_m: "", downstream_invert_m: "", vertical_datum: "", elev_method: "", data_quality: "pendente_validacao" });
+  const [n, setN] = useState({ code: "", node_type: NODE_TYPES[0], latitude: "", longitude: "", cover_elev_m: "", invert_elev_m: "", vertical_datum: "", elev_method: "", data_quality: "pendente_validacao" });
+  const [l, setL] = useState({ code: "", from_node: "", to_node: "", length_m: "", material: "", diameter_mm: "", upstream_invert_m: "", downstream_invert_m: "", vertical_datum: "", elev_method: "", data_quality: "pendente_validacao" });
   const load = async () => {
     const [a, b] = await Promise.all([supabase.from("drainage_nodes").select("*").is("deleted_at", null).order("code"), supabase.from("drainage_links").select("*").is("deleted_at", null).order("code")]);
     setNodes(a.data ?? []); setLinks(b.data ?? []);
@@ -45,19 +45,19 @@ function Page() {
 
   const saveNode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (num(n.invert_elev_m) != null && !n.vertical_datum) return toast.error("Informe a referência altimétrica da cota.");
+    if (num(n.invert_elev_m) != null && !n.vertical_datum) { toast.error("Informe a referência altimétrica da cota."); return; }
     const { error } = await supabase.from("drainage_nodes").insert({ code: n.code, node_type: n.node_type, latitude: num(n.latitude), longitude: num(n.longitude), cover_elev_m: num(n.cover_elev_m), invert_elev_m: num(n.invert_elev_m), vertical_datum: n.vertical_datum || null, elev_method: n.elev_method || null, data_quality: n.data_quality as never });
-    if (error) return toast.error(error.message); toast.success("Nó cadastrado."); load();
+    if (error) { toast.error(error.message); return; } toast.success("Nó cadastrado."); load();
   };
   const saveLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((num(l.upstream_invert_m) != null || num(l.downstream_invert_m) != null) && !l.vertical_datum) return toast.error("Informe a referência altimétrica das cotas.");
+    if ((num(l.upstream_invert_m) != null || num(l.downstream_invert_m) != null) && !l.vertical_datum) { toast.error("Informe a referência altimétrica das cotas."); return; }
     const { error } = await supabase.from("drainage_links").insert({ code: l.code, from_node: l.from_node || null, to_node: l.to_node || null, length_m: num(l.length_m), material: l.material || null, diameter_mm: num(l.diameter_mm), upstream_invert_m: num(l.upstream_invert_m), downstream_invert_m: num(l.downstream_invert_m), vertical_datum: l.vertical_datum || null, elev_method: l.elev_method || null, data_quality: l.data_quality as never });
-    if (error) return toast.error(error.message); toast.success("Trecho cadastrado."); load();
+    if (error) { toast.error(error.message); return; } toast.success("Trecho cadastrado."); load();
   };
-  const inp = (s: Record<string, string>, set: (v: Record<string, string>) => void, k: string, label: string, type = "text") => (
+  const inp = <T extends Record<string, string>>(s: T, set: (v: T) => void, k: keyof T & string, label: string, type = "text") => (
     <div><Label className="text-xs">{label}</Label><Input type={type} step="any" value={s[k]} required={k === "code"} onChange={(e) => set({ ...s, [k]: e.target.value })} /></div>);
-  const sel = (s: Record<string, string>, set: (v: Record<string, string>) => void, k: string, label: string, opts: [string, string][]) => (
+  const sel = <T extends Record<string, string>>(s: T, set: (v: T) => void, k: keyof T & string, label: string, opts: [string, string][]) => (
     <div><Label className="text-xs">{label}</Label><select className="h-9 w-full rounded-md border bg-background px-2 text-sm" value={s[k]} onChange={(e) => set({ ...s, [k]: e.target.value })}><option value="">—</option>{opts.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></div>);
   const qOpts = Object.entries(QUALITY_LABEL) as [string, string][];
   const nodeOpts = nodes.map((x) => [x.id, x.code] as [string, string]);

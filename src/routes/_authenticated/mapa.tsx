@@ -35,10 +35,10 @@ function Page() {
         supabase.from("drainage_links").select("*").is("deleted_at", null),
       ]);
       const esc = (s: unknown) => String(s ?? "—").replace(/[<>&]/g, "");
-      (fe.data ?? []).forEach((f) => L.circleMarker([f.latitude!, f.longitude!], { radius: 9, color: css("var(--risk-4)"), fillColor: css(QUALITY_VAR[f.data_quality]), fillOpacity: 0.9, weight: 3 })
+      (fe.data ?? []).forEach((f) => L.circleMarker([f.latitude!, f.longitude!], { radius: 9, color: css("var(--risk-4)"), fillColor: css(QUALITY_VAR[f.data_quality] ?? ""), fillOpacity: 0.9, weight: 3 })
         .bindPopup(`<b>${esc(f.code)}</b><br/>${esc(f.address)} — ${esc(f.neighborhood)}<br/>Profundidade: ${esc(f.water_depth_m)} m<br/>Hipótese: ${esc(f.cause_hypothesis)}<br/>Origem: ${QUALITY_LABEL[f.data_quality]}`).addTo(groups.floods));
       const byId = new Map((nd.data ?? []).map((n) => [n.id, n]));
-      (nd.data ?? []).forEach((n) => L.circleMarker([n.latitude!, n.longitude!], { radius: 5, color: css("var(--primary)"), fillColor: css(QUALITY_VAR[n.data_quality]), fillOpacity: 1, weight: 2 })
+      (nd.data ?? []).forEach((n) => L.circleMarker([n.latitude!, n.longitude!], { radius: 5, color: css("var(--primary)"), fillColor: css(QUALITY_VAR[n.data_quality] ?? ""), fillOpacity: 1, weight: 2 })
         .bindPopup(`<b>${esc(n.code)}</b> (${esc(n.node_type)})<br/>Cota fundo: ${esc(n.invert_elev_m)} m [${esc(n.vertical_datum)}]<br/>Origem: ${QUALITY_LABEL[n.data_quality]}`).addTo(groups.nodes));
       (lk.data ?? []).forEach((l) => { const a = l.from_node ? byId.get(l.from_node) : null, b = l.to_node ? byId.get(l.to_node) : null;
         if (a && b) L.polyline([[a.latitude!, a.longitude!], [b.latitude!, b.longitude!]], { color: css("var(--water)"), weight: 4, dashArray: l.data_quality === "pendente_validacao" ? "6 6" : undefined })
