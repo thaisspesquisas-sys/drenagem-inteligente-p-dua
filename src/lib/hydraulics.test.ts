@@ -18,12 +18,12 @@ describe("declividade", () => {
 });
 
 describe("Manning seção circular", () => {
-  it("D=1 m seção plena, S=0.001, n=0.013 → Q≈0.6031 m³/s, V≈0.768 m/s", () => {
+  it("D=1 m seção plena, S=0.001, n=0.013 → Q≈0.7582 m³/s, V≈0.9654 m/s", () => {
     const r = manningCircular({ diameterM: 1, slope: 0.001, n: 0.013, fillRatio: 1 });
     expect(r.area).toBeCloseTo(Math.PI / 4, 6);
     expect(r.hydraulicRadius).toBeCloseTo(0.25, 6);
-    expect(r.velocity).toBeCloseTo(0.7676, 3);
-    expect(r.flow).toBeCloseTo(0.6029, 3);
+    expect(r.velocity).toBeCloseTo(0.9654, 3);
+    expect(r.flow).toBeCloseTo(0.7582, 3);
   });
   it("meia seção tem R = D/4 e metade da área", () => {
     const r = manningCircular({ diameterM: 0.6, slope: 0.005, n: 0.013, fillRatio: 0.5 });
