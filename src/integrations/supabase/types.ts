@@ -14,6 +14,155 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_events: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_by: string | null
+          id: string
+          level: string
+          metric: string
+          rule_id: string | null
+          rule_name: string
+          source: string
+          threshold: number
+          triggered_at: string
+          value: number
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_by?: string | null
+          id?: string
+          level: string
+          metric: string
+          rule_id?: string | null
+          rule_name: string
+          source: string
+          threshold: number
+          triggered_at?: string
+          value: number
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_by?: string | null
+          id?: string
+          level?: string
+          metric?: string
+          rule_id?: string | null
+          rule_name?: string
+          source?: string
+          threshold?: number
+          triggered_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_events_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "alert_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alert_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          level: string
+          metric: string
+          name: string
+          notes: string | null
+          operator: string
+          threshold: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          level?: string
+          metric: string
+          name: string
+          notes?: string | null
+          operator?: string
+          threshold: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          level?: string
+          metric?: string
+          name?: string
+          notes?: string | null
+          operator?: string
+          threshold?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      alternatives: {
+        Row: {
+          benefit_score: number | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          est_capacity_m3s: number | null
+          est_cost_brl: number | null
+          id: string
+          implementation_months: number | null
+          name: string
+          notes: string | null
+          problem: string | null
+          risk_score: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          benefit_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          est_capacity_m3s?: number | null
+          est_cost_brl?: number | null
+          id?: string
+          implementation_months?: number | null
+          name: string
+          notes?: string | null
+          problem?: string | null
+          risk_score?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          benefit_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          est_capacity_m3s?: number | null
+          est_cost_brl?: number | null
+          id?: string
+          implementation_months?: number | null
+          name?: string
+          notes?: string | null
+          problem?: string | null
+          risk_score?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -46,6 +195,74 @@ export type Database = {
           table_name?: string
         }
         Relationships: []
+      }
+      basins: {
+        Row: {
+          area_km2: number | null
+          code: string
+          created_at: string
+          created_by: string | null
+          curve_number: number | null
+          data_quality: Database["public"]["Enums"]["data_quality"]
+          deleted_at: string | null
+          delta_h_m: number | null
+          id: string
+          main_length_km: number | null
+          name: string
+          notes: string | null
+          outlet_description: string | null
+          parent_id: string | null
+          runoff_c: number | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_km2?: number | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          curve_number?: number | null
+          data_quality?: Database["public"]["Enums"]["data_quality"]
+          deleted_at?: string | null
+          delta_h_m?: number | null
+          id?: string
+          main_length_km?: number | null
+          name: string
+          notes?: string | null
+          outlet_description?: string | null
+          parent_id?: string | null
+          runoff_c?: number | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_km2?: number | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          curve_number?: number | null
+          data_quality?: Database["public"]["Enums"]["data_quality"]
+          deleted_at?: string | null
+          delta_h_m?: number | null
+          id?: string
+          main_length_km?: number | null
+          name?: string
+          notes?: string | null
+          outlet_description?: string | null
+          parent_id?: string | null
+          runoff_c?: number | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "basins_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "basins"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calculation_runs: {
         Row: {
@@ -313,6 +530,84 @@ export type Database = {
         }
         Relationships: []
       }
+      field_inspections: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          data_quality: Database["public"]["Enums"]["data_quality"]
+          deleted_at: string | null
+          findings: string | null
+          flood_event_id: string | null
+          id: string
+          inspected_at: string
+          latitude: number | null
+          longitude: number | null
+          node_id: string | null
+          obstruction_level: string | null
+          photo_paths: string[]
+          recommendations: string | null
+          structure_condition: string | null
+          team: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          data_quality?: Database["public"]["Enums"]["data_quality"]
+          deleted_at?: string | null
+          findings?: string | null
+          flood_event_id?: string | null
+          id?: string
+          inspected_at?: string
+          latitude?: number | null
+          longitude?: number | null
+          node_id?: string | null
+          obstruction_level?: string | null
+          photo_paths?: string[]
+          recommendations?: string | null
+          structure_condition?: string | null
+          team?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          data_quality?: Database["public"]["Enums"]["data_quality"]
+          deleted_at?: string | null
+          findings?: string | null
+          flood_event_id?: string | null
+          id?: string
+          inspected_at?: string
+          latitude?: number | null
+          longitude?: number | null
+          node_id?: string | null
+          obstruction_level?: string | null
+          photo_paths?: string[]
+          recommendations?: string | null
+          structure_condition?: string | null
+          team?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_inspections_flood_event_id_fkey"
+            columns: ["flood_event_id"]
+            isOneToOne: false
+            referencedRelation: "flood_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_inspections_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "drainage_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flood_events: {
         Row: {
           address: string | null
@@ -466,6 +761,45 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          report_type: string
+          status: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          report_type: string
+          status?: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          report_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       simulation_runs: {
         Row: {
           assumptions: string | null
@@ -553,6 +887,60 @@ export type Database = {
           target_id?: string
           target_table?: string
           target_version?: number
+        }
+        Relationships: []
+      }
+      topo_surveys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          crs: string | null
+          data_quality: Database["public"]["Enums"]["data_quality"]
+          declared_accuracy: string | null
+          deleted_at: string | null
+          equipment: string | null
+          id: string
+          name: string
+          notes: string | null
+          points: Json
+          responsible: string | null
+          surveyed_at: string | null
+          updated_at: string
+          vertical_datum: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          crs?: string | null
+          data_quality?: Database["public"]["Enums"]["data_quality"]
+          declared_accuracy?: string | null
+          deleted_at?: string | null
+          equipment?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          points?: Json
+          responsible?: string | null
+          surveyed_at?: string | null
+          updated_at?: string
+          vertical_datum?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          crs?: string | null
+          data_quality?: Database["public"]["Enums"]["data_quality"]
+          declared_accuracy?: string | null
+          deleted_at?: string | null
+          equipment?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          points?: Json
+          responsible?: string | null
+          surveyed_at?: string | null
+          updated_at?: string
+          vertical_datum?: string | null
         }
         Relationships: []
       }
