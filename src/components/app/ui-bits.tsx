@@ -37,13 +37,13 @@ export function QualityBadge({ q }: { q: string }) {
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <div className="rounded-md border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">{children}</div>;
+  return <div className="rounded-md border border-dashed bg-card/90 p-8 text-center text-sm text-muted-foreground backdrop-blur-xs">{children}</div>;
 }
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="rounded-md border bg-card p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+    <div className="rounded-lg border bg-card/90 p-4 shadow-2xs backdrop-blur-xs transition-shadow hover:shadow-xs">
+      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="num mt-1 text-2xl font-semibold">{value}</div>
       {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
     </div>
@@ -52,8 +52,8 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
 
 export function Notice({ children, tone = "warning" }: { children: ReactNode; tone?: "warning" | "info" }) {
   return (
-    <div className={cn("rounded-md border-l-4 p-3 text-sm",
-      tone === "warning" ? "border-warning bg-warning/15 text-warning-foreground" : "border-water bg-accent text-accent-foreground")}>
+    <div className={cn("rounded-md border-l-4 p-3 text-sm backdrop-blur-xs",
+      tone === "warning" ? "border-warning bg-warning/15 text-warning-foreground" : "border-water bg-accent/85 text-accent-foreground")}>
       {children}
     </div>
   );
