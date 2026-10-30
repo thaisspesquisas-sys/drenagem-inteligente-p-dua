@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Cloud, CloudLightning, CloudRain, CloudSun, Sun } from "lucide-react";
+import { CloudLightning, CloudRain, CloudSun, Sun } from "lucide-react";
 import { getWeather, type WeatherPayload } from "@/lib/weather.functions";
 
 export type WeatherCondition = "sunny" | "cloudy" | "rainy" | "stormy";
@@ -17,7 +17,7 @@ export type WeatherContextValue = {
   isStale: boolean;
   error: string | null;
   loading: boolean;
-  refresh: () => Promise<void>;
+  refresh: (force?: boolean) => Promise<void>;
 };
 
 const WeatherCtx = createContext<WeatherContextValue | null>(null);
@@ -28,13 +28,45 @@ export function useWeatherTheme() {
   return ctx;
 }
 
-export function classifyWmoWeather(code?: number | null, precipMm?: number | null): { condition: WeatherCondition; label: string } {
+export function classifyOfficialWeather(payload?: WeatherPayload | null): {
+  condition: WeatherCondition;
+  label: string;
+} {
+  const inmetSummary = payload?.inmet?.currentSummary?.trim() ?? "";
+  const inmetAlerts = payload?.inmet?.alerts ?? [];
+  const stationRain = payload?.inmet?.station?.chuvaHoraMm ?? 0;
+
+  if (inmetSummary) {
+    const s = inmetSummary.toLowerCase();
+    if (s.includes("trovoada") || s.includes("tempestade") || s.includes("granizo")) {
+      return { condition: "stormy", label: `${inmetSummary} (INMET)` };
+    }
+    if (s.includes("pancadas de chuva") || s.includes("chuva") || s.includes("chuvisco")) {
+      return { condition: "rainy", label: `${inmetSummary} (INMET)` };
+    }
+    if (s.includes("muitas nuvens") || s.includes("nublado") || s.includes("encoberto") || s.includes("nevoeiro")) {
+      if (inmetAlerts.some((a) => a.descricao.toLowerCase().includes("chuva"))) {
+        return { condition: "rainy", label: `${inmetSummary} · Aviso de Chuvas (INMET)` };
+      }
+      return { condition: "cloudy", label: `${inmetSummary} (INMET)` };
+    }
+    if (s.includes("poucas nuvens") || s.includes("claro") || s.includes("limpo") || s.includes("sol")) {
+      return { condition: "sunny", label: `${inmetSummary} (INMET)` };
+    }
+  }
+
+  if (stationRain >= 10) return { condition: "stormy", label: "Chuva intensa observada na estação INMET" };
+  if (stationRain > 0) return { condition: "rainy", label: "Chuva observada na estação INMET" };
+
+  // Fallback to WMO weather_code from Open-Meteo
+  const code = payload?.current?.weather_code;
+  const precipMm = payload?.current?.precipitation;
   if (code != null) {
     if (code >= 95) return { condition: "stormy", label: "Tempestade / Trovoadas" };
     if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
       return code >= 63 || code === 82
         ? { condition: "rainy", label: "Chuva moderada a forte" }
-        : { condition: "rainy", label: "Chuva leve / Aguaceiros" };
+        : { condition: "rainy", label: "Chuva leve / Pancadas de chuva" };
     }
     if (code === 45 || code === 48) return { condition: "cloudy", label: "Neblina / Nevoeiro" };
     if (code === 3) return { condition: "cloudy", label: "Céu encoberto (nublado)" };
@@ -67,7 +99,7 @@ export const CONDITION_META: Record<
     icon: CloudRain,
   },
   stormy: {
-    title: "Tempestade",
+    title: "Chuva e Trovoadas",
     badgeCls: "bg-indigo-600/25 text-indigo-950 border-indigo-500/40",
     icon: CloudLightning,
   },
@@ -92,10 +124,10 @@ export function WeatherThemeProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refresh = async () => {
+  const refresh = async (force = false) => {
     setLoading(true);
     try {
-      const r = await fn();
+      const r = await fn({ data: { forceRefresh: force } });
       if (r.ok) {
         setPayload(r.payload);
         setFetchedAt(r.fetchedAt);
@@ -118,13 +150,10 @@ export function WeatherThemeProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    refresh();
+    refresh(false);
   }, []);
 
-  const autoClassified = useMemo(
-    () => classifyWmoWeather(payload?.current?.weather_code, payload?.current?.precipitation),
-    [payload]
-  );
+  const autoClassified = useMemo(() => classifyOfficialWeather(payload), [payload]);
 
   const condition: WeatherCondition =
     overrideCondition === "auto" ? autoClassified.condition : overrideCondition;
@@ -208,20 +237,26 @@ function WeatherCanvas({ condition }: { condition: WeatherCondition }) {
 export function WeatherBackdropControls({ compact = false }: { compact?: boolean }) {
   const { condition, overrideCondition, setOverrideCondition, weatherLabel, payload } = useWeatherTheme();
   const Icon = CONDITION_META[condition].icon;
-  const temp = payload?.current?.temperature_2m;
+  const temp = payload?.inmet?.station?.tempInsC ?? payload?.current?.temperature_2m;
+  const alertCount = payload?.inmet?.alerts?.length ?? 0;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-xs">
       <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium ${CONDITION_META[condition].badgeCls}`}>
-        <Icon className="h-3.5 w-3.5" />
-        <span>{weatherLabel}</span>
+        <Icon className="h-3.5 w-3.5 shrink-0" />
+        <span className="max-w-[260px] truncate">{weatherLabel}</span>
         {temp != null && <span className="num font-semibold">· {temp.toFixed(1)} °C</span>}
       </span>
+      {alertCount > 0 && (
+        <span className="inline-flex items-center rounded-full border border-warning bg-warning/25 px-2 py-0.5 text-[11px] font-semibold text-warning-foreground">
+          {alertCount} Aviso(s) INMET
+        </span>
+      )}
       {!compact && (
         <div className="inline-flex items-center rounded-full border bg-card/80 p-0.5 shadow-2xs backdrop-blur-xs">
           {(
             [
-              ["auto", "Tempo Real"],
+              ["auto", "INMET Real"],
               ["sunny", "Sol"],
               ["cloudy", "Nublado"],
               ["rainy", "Chuva"],
@@ -246,4 +281,3 @@ export function WeatherBackdropControls({ compact = false }: { compact?: boolean
     </div>
   );
 }
-

@@ -14,12 +14,16 @@ import {
   AlertTriangle,
   CloudRain,
   Droplets,
+  Gauge,
   Network,
+  Radio,
   RefreshCw,
+  ShieldAlert,
   ShieldCheck,
   Thermometer,
   Umbrella,
   Waves,
+  Wind,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, Stat, Notice, fmt, fmtDate } from "@/components/app/ui-bits";
@@ -35,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
     meta: [
       { title: "Dashboard — Drenagem Inteligente Pádua" },
-      { name: "description", content: "Painel principal com previsão meteorológica interativa e indicadores reais da drenagem urbana." },
+      { name: "description", content: "Painel principal com previsão oficial INMET em tempo real e indicadores da drenagem urbana." },
     ],
   }),
   component: Painel,
@@ -146,8 +150,8 @@ function Painel() {
 
   const v = (k: string) => c[k] ?? "…";
 
-  // Weather data processing for the Dashboard Forecast Panel
-  const now = Date.now();
+  // Anchor hourly slice to the API's current time so clock differences never zero out the chart
+  const refTimeMs = payload?.current?.time ? new Date(payload.current.time).getTime() : Date.now();
   const hourly = (payload?.hourly?.time ?? [])
     .map((t, i) => ({
       t,
@@ -155,23 +159,20 @@ function Painel() {
       mm: payload?.hourly?.precipitation?.[i] ?? 0,
       prob: payload?.hourly?.precipitation_probability?.[i] ?? 0,
     }))
-    .filter((x) => new Date(x.t).getTime() >= now - 3600000)
+    .filter((x) => new Date(x.t).getTime() >= refTimeMs - 3600000)
     .slice(0, 24);
 
   const acc24 = hourly.reduce((s, x) => s + (x.mm ?? 0), 0);
   const acc72 = (payload?.hourly?.time ?? [])
     .map((t, i) => ({ t, mm: payload?.hourly?.precipitation?.[i] ?? 0 }))
-    .filter((x) => new Date(x.t).getTime() >= now - 3600000)
+    .filter((x) => new Date(x.t).getTime() >= refTimeMs - 3600000)
     .slice(0, 72)
     .reduce((s, x) => s + x.mm, 0);
 
-  const daily = (payload?.daily?.time ?? []).slice(0, 5).map((d, i) => ({
-    d: d.slice(5).split("-").reverse().join("/"),
-    mm: payload?.daily?.precipitation_sum?.[i] ?? null,
-    prob: payload?.daily?.precipitation_probability_max?.[i] ?? null,
-    tmax: payload?.daily?.temperature_2m_max?.[i] ?? null,
-    tmin: payload?.daily?.temperature_2m_min?.[i] ?? null,
-  }));
+  const inmetDays = payload?.inmet?.days ?? [];
+  const inmetStation = payload?.inmet?.station ?? null;
+  const inmetAlerts = payload?.inmet?.alerts ?? [];
+  const todayInmet = inmetDays[0];
 
   const WeatherIcon = CONDITION_META[condition].icon;
 
@@ -179,12 +180,12 @@ function Painel() {
     <>
       <PageHeader
         title="Dashboard de Monitoramento e Drenagem"
-        description="Visão integrada das condições meteorológicas de Santo Antônio de Pádua — RJ e indicadores reais do cadastro técnico municipal."
+        description="Integração oficial em tempo real com o INMET (Instituto Nacional de Meteorologia — IBGE 3304706), Estação Automática A604 e modelo horário Open-Meteo."
         actions={
           <div className="flex gap-2">
             <Link to="/previsao">
               <Button size="sm" variant="default" className="gap-1.5">
-                <CloudRain className="h-4 w-4" /> Central de Alertas
+                <CloudRain className="h-4 w-4" /> Previsão e Alertas
               </Button>
             </Link>
             <Link to="/mapa">
@@ -194,127 +195,218 @@ function Painel() {
         }
       />
 
-      {/* Interactive Weather Forecast Panel */}
-      <section className="mb-6 rounded-xl border bg-card/85 p-5 shadow-sm backdrop-blur-md">
+      {/* Official INMET Active Warnings Banner */}
+      {inmetAlerts.length > 0 && (
+        <div className="mb-5 space-y-2">
+          {inmetAlerts.map((al) => (
+            <div
+              key={al.id}
+              className="flex flex-wrap items-start justify-between gap-3 rounded-xl border-l-8 bg-card/95 p-4 shadow-xs backdrop-blur-md"
+              style={{ borderLeftColor: al.cor || "#FFFE00" }}
+            >
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded bg-warning/30 px-2 py-0.5 text-xs font-bold uppercase text-warning-foreground">
+                    <ShieldAlert className="h-3.5 w-3.5" /> Aviso Oficial INMET Ativo · {al.severidade}
+                  </span>
+                  <span className="text-sm font-bold">{al.descricao} — Santo Antônio de Pádua (RJ)</span>
+                </div>
+                {al.riscos[0] && <p className="text-xs text-muted-foreground">{al.riscos[0]}</p>}
+                <div className="text-[11px] text-muted-foreground">
+                  Vigência: {al.dataInicio} {al.horaInicio} até {al.dataFim} {al.horaFim} · Código: {al.codigo}
+                </div>
+              </div>
+              <Link to="/previsao">
+                <Button size="sm" variant="outline" className="text-xs">Ver instruções oficiais</Button>
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Official Real-Time Weather Forecast Panel */}
+      <section className="mb-6 rounded-xl border bg-card/88 p-5 shadow-sm backdrop-blur-md">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-4">
           <div className="flex items-center gap-3.5">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border ${CONDITION_META[condition].badgeCls}`}>
               <WeatherIcon className="h-8 w-8" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Previsão Meteorológica · Sede Municipal ({PADUA.lat}, {PADUA.lon})
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                  <Radio className="h-3 w-3" /> Fonte Oficial: INMET (IBGE {PADUA.ibge})
                 </span>
+                {inmetStation && (
+                  <span className="text-xs text-muted-foreground">
+                    Estação INMET {inmetStation.codigo} ({inmetStation.nome} · {inmetStation.distanciaKm} km)
+                  </span>
+                )}
                 {isStale && (
                   <span className="rounded bg-warning/20 px-1.5 py-0.5 text-[10px] font-semibold text-warning-foreground">
                     Cache histórico
                   </span>
                 )}
               </div>
-              <div className="mt-0.5 flex flex-wrap items-baseline gap-3">
-                <h2 className="text-xl font-bold">{weatherLabel}</h2>
-                {payload?.current?.temperature_2m != null && (
+              <div className="mt-1 flex flex-wrap items-baseline gap-3">
+                <h2 className="text-lg font-bold md:text-xl">{weatherLabel}</h2>
+                {(inmetStation?.tempInsC ?? payload?.current?.temperature_2m) != null && (
                   <span className="num text-2xl font-bold text-primary">
-                    {fmt(payload.current.temperature_2m, 1)} °C
+                    {fmt(inmetStation?.tempInsC ?? payload?.current?.temperature_2m, 1)} °C
+                  </span>
+                )}
+                {inmetStation?.sensacaoTermicaC != null && (
+                  <span className="text-xs text-muted-foreground">
+                    (Sensação térmica: <b className="num">{fmt(inmetStation.sensacaoTermicaC, 1)} °C</b>)
                   </span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Fonte: Open-Meteo (modelo numérico) · Atualizado em {fmtDate(fetchedAt)} · O fundo da tela reage automaticamente ao clima vigente.
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Consultado em tempo real em {fmtDate(fetchedAt)} · O fundo da tela reflete automaticamente a condição meteorológica oficial do INMET.
               </p>
             </div>
           </div>
 
           {/* Interactive Backdrop Theme Selector */}
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Fundo interativo:</span>
-              <div className="inline-flex rounded-lg border bg-background/80 p-0.5 text-xs">
-                {(
-                  [
-                    ["auto", "Automático (Clima Real)"],
-                    ["sunny", "Ensolarado"],
-                    ["cloudy", "Nublado"],
-                    ["rainy", "Chuvoso"],
-                    ["stormy", "Tempestade"],
-                  ] as [WeatherCondition | "auto", string][]
-                ).map(([k, label]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setOverrideCondition(k)}
-                    className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-                      overrideCondition === k
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={refreshWeather}
-                disabled={weatherLoading}
-                title="Atualizar dados meteorológicos"
-              >
-                <RefreshCw className={`h-4 w-4 ${weatherLoading ? "animate-spin" : ""}`} />
-              </Button>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <div className="inline-flex rounded-lg border bg-background/80 p-0.5 text-xs">
+              {(
+                [
+                  ["auto", "Automático (INMET Real)"],
+                  ["sunny", "Ensolarado"],
+                  ["cloudy", "Nublado"],
+                  ["rainy", "Chuvoso"],
+                  ["stormy", "Tempestade"],
+                ] as [WeatherCondition | "auto", string][]
+              ).map(([k, label]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setOverrideCondition(k)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                    overrideCondition === k
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => refreshWeather(true)}
+              disabled={weatherLoading}
+              className="gap-1.5 text-xs"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${weatherLoading ? "animate-spin" : ""}`} />
+              Atualizar Agora
+            </Button>
           </div>
         </div>
 
-        {/* Weather Metrics + 24h Hourly Chart + 5-day Strip */}
+        {/* Today's INMET Official Period Breakdown (Manhã / Tarde / Noite) */}
+        {todayInmet && (todayInmet.manha || todayInmet.tarde || todayInmet.noite) && (
+          <div className="mt-4 grid gap-2.5 md:grid-cols-3">
+            {(
+              [
+                ["manha", "Manhã (Hoje)", todayInmet.manha],
+                ["tarde", "Tarde (Hoje)", todayInmet.tarde],
+                ["noite", "Noite (Hoje)", todayInmet.noite],
+              ] as const
+            ).map(([key, title, p]) =>
+              p ? (
+                <div
+                  key={key}
+                  className={`rounded-lg border p-3 text-xs ${
+                    payload?.inmet?.currentPeriod === key
+                      ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
+                      : "bg-background/65"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-muted-foreground">
+                      {title} {payload?.inmet?.currentPeriod === key && "· AGORA"}
+                    </span>
+                    <span className="num font-semibold">
+                      {p.temp_min ?? "—"}°C a {p.temp_max ?? "—"}°C
+                    </span>
+                  </div>
+                  <div className="mt-1 font-medium text-foreground">{p.resumo}</div>
+                  <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                    {p.umidade_min != null && (
+                      <span>Umidade: {p.umidade_min}%–{p.umidade_max}%</span>
+                    )}
+                    {p.dir_vento && (
+                      <span>Vento: {p.dir_vento} ({p.int_vento})</span>
+                    )}
+                  </div>
+                </div>
+              ) : null
+            )}
+          </div>
+        )}
+
+        {/* Telemetry + 5-day INMET Forecast + 24h Hourly Model */}
         <div className="mt-4 grid gap-5 lg:grid-cols-[1.15fr_1fr]">
           <div>
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
               <div className="rounded-lg border bg-background/70 p-3">
                 <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Droplets className="h-3.5 w-3.5 text-water" /> Chuva agora
+                  <Droplets className="h-3.5 w-3.5 text-water" /> Umidade / Chuva 1h
                 </div>
-                <div className="num mt-1 text-lg font-bold">
-                  {payload?.current?.precipitation != null ? `${fmt(payload.current.precipitation, 1)} mm` : "—"}
+                <div className="num mt-1 text-base font-bold">
+                  {inmetStation?.umidadeInsPct != null ? `${fmt(inmetStation.umidadeInsPct, 0)}%` : "—"} ·{" "}
+                  {fmt(inmetStation?.chuvaHoraMm ?? payload?.current?.precipitation ?? 0, 1)} mm
                 </div>
               </div>
               <div className="rounded-lg border bg-background/70 p-3">
                 <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <CloudRain className="h-3.5 w-3.5 text-water" /> Acumulado 24 h
                 </div>
-                <div className="num mt-1 text-lg font-bold">{fmt(acc24, 1)} mm</div>
+                <div className="num mt-1 text-base font-bold">{fmt(acc24, 1)} mm</div>
               </div>
               <div className="rounded-lg border bg-background/70 p-3">
                 <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <Waves className="h-3.5 w-3.5 text-primary" /> Acumulado 72 h
                 </div>
-                <div className="num mt-1 text-lg font-bold">{fmt(acc72, 1)} mm</div>
+                <div className="num mt-1 text-base font-bold">{fmt(acc72, 1)} mm</div>
               </div>
               <div className="rounded-lg border bg-background/70 p-3">
                 <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Umbrella className="h-3.5 w-3.5 text-primary" /> Prob. máx. hoje
+                  <Wind className="h-3.5 w-3.5 text-primary" /> Vento / Pressão
                 </div>
-                <div className="num mt-1 text-lg font-bold">
-                  {daily[0]?.prob != null ? `${fmt(daily[0].prob, 0)}%` : "—"}
+                <div className="num mt-1 text-base font-bold">
+                  {inmetStation?.ventoVelMs != null ? `${fmt(inmetStation.ventoVelMs * 3.6, 1)} km/h` : "—"}
                 </div>
               </div>
             </div>
 
-            {/* 5-day compact forecast strip */}
-            {daily.length > 0 && (
-              <div className="mt-3 grid grid-cols-5 gap-2">
-                {daily.map((d, idx) => (
-                  <div key={d.d} className="rounded-lg border bg-background/60 p-2 text-center text-xs">
-                    <div className="font-semibold">{idx === 0 ? "Hoje" : d.d}</div>
-                    <div className="num mt-1 font-medium text-water">{fmt(d.mm, 1)} mm</div>
-                    <div className="num text-[11px] text-muted-foreground">Prob. {fmt(d.prob, 0)}%</div>
-                    <div className="num mt-0.5 flex items-center justify-center gap-0.5 text-[11px] text-muted-foreground">
-                      <Thermometer className="h-3 w-3" />
-                      {fmt(d.tmin, 0)}°/{fmt(d.tmax, 0)}°
+            {/* 5-day official INMET forecast strip */}
+            {inmetDays.length > 0 && (
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                {inmetDays.slice(0, 5).map((d, idx) => {
+                  const p = d.tarde ?? d.manha ?? d.dia;
+                  const mmModel = payload?.daily?.precipitation_sum?.[idx];
+                  const probModel = payload?.daily?.precipitation_probability_max?.[idx];
+                  return (
+                    <div key={d.date} className="rounded-lg border bg-background/60 p-2.5 text-xs">
+                      <div className="flex items-center justify-between font-semibold">
+                        <span>{idx === 0 ? "Hoje" : d.date.slice(0, 5)}</span>
+                        <span className="num text-[11px] text-primary">
+                          {p?.temp_min ?? "—"}°/{p?.temp_max ?? "—"}°
+                        </span>
+                      </div>
+                      <div className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] text-foreground" title={p?.resumo}>
+                        {p?.resumo ?? "—"}
+                      </div>
+                      <div className="num mt-1 flex items-center justify-between border-t pt-1 text-[10px] text-muted-foreground">
+                        <span>{mmModel != null ? `${fmt(mmModel, 1)} mm` : "—"}</span>
+                        <span>{probModel != null ? `Prob. ${fmt(probModel, 0)}%` : ""}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -322,8 +414,8 @@ function Painel() {
           {/* 24-Hour Precipitation & Probability Mini-Chart */}
           <div className="rounded-lg border bg-background/70 p-3">
             <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="font-semibold">Evolução horária nas próximas 24 h (mm e %)</span>
-              <Link to="/previsao" className="text-water underline">Ver 72 h e regras de risco</Link>
+              <span className="font-semibold">Modelo horário próximas 24 h (mm e prob. %)</span>
+              <Link to="/previsao" className="text-water underline">Detalhes e alertas</Link>
             </div>
             <div className="h-44">
               {hourly.length === 0 ? (
@@ -364,7 +456,7 @@ function Painel() {
         <Stat label="Relatórios técnicos" value={v("reportsCount")} hint="Estudos versionados" />
         <Stat label="Revisões pendentes" value={v("revPend")} hint="Aguardando engenheiro" />
         <Stat label="Aprovações técnicas" value={v("revApproved")} hint="Validados com CREA" />
-        <Stat label="Alertas ativos" value={v("activeAlerts")} hint="Pendentes de confirmação" />
+        <Stat label="Alertas internos ativos" value={v("activeAlerts")} hint="Pendentes de confirmação" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
