@@ -12,3 +12,4 @@
 - Engineering formulas live as pure, versioned functions in src/lib/hydraulics.ts with reference-value tests; every saved calculation stores inputs + method_version so results are reproducible.
 - Authorization is enforced in Postgres (user_roles + has_role/can_edit, RLS, guard triggers such as the simulation "concluída" guard); UI role checks are cosmetic only.
 - Protected pages live under src/routes/_authenticated/ (client-only gate); browser-only libs like Leaflet are imported dynamically inside effects.
+- Whenever a task is completed and verified, automatically stage, commit, and `git push` the changes to the remote branch (without rewriting published history).

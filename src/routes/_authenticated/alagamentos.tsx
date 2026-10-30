@@ -16,37 +16,83 @@ export const Route = createFileRoute("/_authenticated/alagamentos")({
 });
 
 const STATUS: Record<string, string> = { nao_vistoriado: "Não vistoriado", vistoria_agendada: "Vistoria agendada", em_investigacao: "Em investigação", diagnosticado: "Diagnosticado" };
-const empty = { code: "", address: "", neighborhood: "", latitude: "", longitude: "", coord_method: "GPS de celular", occurred_at: "", water_depth_m: "", duration_min: "", observed_rain_mm: "", river_condition: "", obstructions: "", damages: "", cause_hypothesis: "", data_quality: "pendente_validacao", diagnosis_status: "nao_vistoriado", notes: "" };
+const empty = {
+  code: "", address: "", neighborhood: "", latitude: "", longitude: "", coord_method: "GPS de celular",
+  occurred_at: "", water_depth_m: "", flooded_extent_m: "", duration_min: "", reported_frequency: "",
+  weather_conditions: "", observed_rain_mm: "", river_condition: "", has_drainage_structures: "",
+  obstructions: "", damages: "", traffic_impact: false, cause_hypothesis: "", cause_confirmed: false,
+  needs_inspection: true, data_quality: "pendente_validacao", diagnosis_status: "nao_vistoriado", notes: "",
+};
 
 function Page() {
   const { can } = useAuth();
   const [rows, setRows] = useState<Tables<"flood_events">[]>([]);
   const [f, setF] = useState(empty);
+  const [editId, setEditId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [print, setPrint] = useState<Tables<"flood_events"> | null>(null);
   const load = async () => {
     const { data, error } = await supabase.from("flood_events").select("*").is("deleted_at", null).order("created_at", { ascending: false });
-    if (error) toast.error(error.message); setRows(data ?? []);
+    if (error) toast.error(error.message);
+    setRows(data ?? []);
   };
   useEffect(() => { load(); }, []);
   const num = (s: string) => (s.trim() === "" ? null : Number(s));
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const lat = num(f.latitude), lon = num(f.longitude);
-    if (lat != null && (lat < -22.5 || lat > -20.5 || lon == null || lon < -43 || lon > -41.5)) { toast.error("Coordenadas fora da região de Santo Antônio de Pádua (SIRGAS 2000, graus decimais)."); return; }
-    const { error } = await supabase.from("flood_events").insert({
+    if (lat != null && (lat < -22.5 || lat > -20.5 || lon == null || lon < -43 || lon > -41.5)) {
+      toast.error("Coordenadas fora da região de Santo Antônio de Pádua (SIRGAS 2000, graus decimais).");
+      return;
+    }
+    const payload = {
       code: f.code, address: f.address || null, neighborhood: f.neighborhood || null, latitude: lat, longitude: lon,
       coord_method: f.coord_method, occurred_at: f.occurred_at ? new Date(f.occurred_at).toISOString() : null,
-      water_depth_m: num(f.water_depth_m), duration_min: num(f.duration_min), observed_rain_mm: num(f.observed_rain_mm),
-      river_condition: f.river_condition || null, obstructions: f.obstructions || null, damages: f.damages || null,
-      cause_hypothesis: f.cause_hypothesis || null, data_quality: f.data_quality as never, diagnosis_status: f.diagnosis_status, notes: f.notes || null,
-    });
+      water_depth_m: num(f.water_depth_m), flooded_extent_m: num(f.flooded_extent_m), duration_min: num(f.duration_min),
+      reported_frequency: f.reported_frequency || null, weather_conditions: f.weather_conditions || null,
+      observed_rain_mm: num(f.observed_rain_mm), river_condition: f.river_condition || null,
+      has_drainage_structures: f.has_drainage_structures || null, obstructions: f.obstructions || null,
+      damages: f.damages || null, traffic_impact: f.traffic_impact, cause_hypothesis: f.cause_hypothesis || null,
+      cause_confirmed: f.cause_confirmed, needs_inspection: f.needs_inspection,
+      data_quality: f.data_quality as never, diagnosis_status: f.diagnosis_status, notes: f.notes || null,
+    };
+    const { error } = editId
+      ? await supabase.from("flood_events").update(payload).eq("id", editId)
+      : await supabase.from("flood_events").insert(payload);
     if (error) { toast.error(error.message); return; }
-    toast.success("Ocorrência registrada."); setF(empty); setOpen(false); load();
+    toast.success(editId ? "Ocorrência atualizada." : "Ocorrência registrada.");
+    setF(empty); setEditId(null); setOpen(false); load();
   };
+
+  const startEdit = (r: Tables<"flood_events">) => {
+    setEditId(r.id);
+    setF({
+      code: r.code, address: r.address ?? "", neighborhood: r.neighborhood ?? "",
+      latitude: r.latitude != null ? String(r.latitude) : "", longitude: r.longitude != null ? String(r.longitude) : "",
+      coord_method: r.coord_method ?? "GPS de celular", occurred_at: r.occurred_at ? r.occurred_at.slice(0, 16) : "",
+      water_depth_m: r.water_depth_m != null ? String(r.water_depth_m) : "",
+      flooded_extent_m: r.flooded_extent_m != null ? String(r.flooded_extent_m) : "",
+      duration_min: r.duration_min != null ? String(r.duration_min) : "",
+      reported_frequency: r.reported_frequency ?? "", weather_conditions: r.weather_conditions ?? "",
+      observed_rain_mm: r.observed_rain_mm != null ? String(r.observed_rain_mm) : "",
+      river_condition: r.river_condition ?? "", has_drainage_structures: r.has_drainage_structures ?? "",
+      obstructions: r.obstructions ?? "", damages: r.damages ?? "", traffic_impact: Boolean(r.traffic_impact),
+      cause_hypothesis: r.cause_hypothesis ?? "", cause_confirmed: Boolean(r.cause_confirmed),
+      needs_inspection: Boolean(r.needs_inspection), data_quality: r.data_quality,
+      diagnosis_status: r.diagnosis_status, notes: r.notes ?? "",
+    });
+    setOpen(true);
+  };
+
+  const softDelete = async (id: string) => {
+    const { error } = await supabase.from("flood_events").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Ocorrência arquivada (exclusão lógica)."); load(); }
+  };
+
   const field = (k: keyof typeof empty, label: string, type = "text", step?: string) => (
-    <div><Label className="text-xs">{label}</Label><Input type={type} step={step} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} required={k === "code"} /></div>
+    <div><Label className="text-xs">{label}</Label><Input type={type} step={step} value={String(f[k])} onChange={(e) => setF({ ...f, [k]: e.target.value })} required={k === "code"} /></div>
   );
   const shown = rows.filter((r) => !q || [r.code, r.address, r.neighborhood].join(" ").toLowerCase().includes(q.toLowerCase()));
 
@@ -58,7 +104,18 @@ function Page() {
         <h1 className="text-xl font-semibold">Ficha de vistoria — {print.code}</h1>
         <p className="text-muted-foreground">Gerada em {new Date().toLocaleString("pt-BR")}</p>
         <dl className="mt-4 grid grid-cols-2 gap-2">
-          {[["Endereço", print.address], ["Bairro", print.neighborhood], ["Coordenadas (SIRGAS 2000)", print.latitude != null ? `${print.latitude}, ${print.longitude}` : "—"], ["Método da coordenada", print.coord_method], ["Data do evento", fmtDate(print.occurred_at)], ["Profundidade observada (m)", print.water_depth_m], ["Duração (min)", print.duration_min], ["Obstruções", print.obstructions], ["Hipótese de causa (não confirmada)", print.cause_hypothesis], ["Qualidade do dado", QUALITY_LABEL[print.data_quality]]].map(([k, v]) => (
+          {[
+            ["Endereço", print.address], ["Bairro", print.neighborhood],
+            ["Coordenadas (SIRGAS 2000)", print.latitude != null ? `${print.latitude}, ${print.longitude}` : "—"],
+            ["Método da coordenada", print.coord_method], ["Data do evento", fmtDate(print.occurred_at)],
+            ["Profundidade observada (m)", print.water_depth_m], ["Extensão alagada (m)", print.flooded_extent_m],
+            ["Duração (min)", print.duration_min], ["Frequência relatada", print.reported_frequency],
+            ["Condições meteorológicas", print.weather_conditions], ["Estruturas existentes", print.has_drainage_structures],
+            ["Obstruções", print.obstructions], ["Condição do Rio Pomba", print.river_condition],
+            ["Impacto no trânsito", print.traffic_impact ? "Sim" : "Não"],
+            [print.cause_confirmed ? "Causa confirmada tecnicamente" : "Hipótese de causa (não confirmada)", print.cause_hypothesis],
+            ["Qualidade do dado", QUALITY_LABEL[print.data_quality]],
+          ].map(([k, v]) => (
             <div key={String(k)} className="border-b py-1"><dt className="text-xs text-muted-foreground">{k}</dt><dd>{v ?? "—"}</dd></div>))}
         </dl>
         <div className="mt-6 grid grid-cols-2 gap-6">{["Observações de campo", "Medições realizadas", "Vistoriador / data", "Assinatura"].map((s) => <div key={s} className="h-24 border p-2 text-xs text-muted-foreground">{s}</div>)}</div>
@@ -69,7 +126,7 @@ function Page() {
   return (
     <>
       <PageHeader title="Pontos de alagamento" description="A causa permanece como hipótese até confirmação por investigação técnica."
-        actions={can.edit && <Button onClick={() => setOpen(!open)}>{open ? "Fechar" : "Nova ocorrência"}</Button>} />
+        actions={can.edit && <Button onClick={() => { setEditId(null); setF(empty); setOpen(!open); }}>{open ? "Fechar" : "Nova ocorrência"}</Button>} />
       {open && (
         <form onSubmit={save} className="mb-6 space-y-4 rounded-md border bg-card p-4">
           <h3 className="text-sm font-semibold">1. Identificação e localização</h3>
@@ -77,21 +134,27 @@ function Page() {
             {field("latitude", "Latitude (°, SIRGAS 2000)", "number", "any")}{field("longitude", "Longitude (°, SIRGAS 2000)", "number", "any")}
             <div><Label className="text-xs">Método da coordenada</Label><select className="h-9 w-full rounded-md border bg-background px-2 text-sm" value={f.coord_method} onChange={(e) => setF({ ...f, coord_method: e.target.value })}>{["GPS de celular", "GNSS de precisão", "Estação total", "Leitura em mapa"].map((o) => <option key={o}>{o}</option>)}</select></div></div>
           <h3 className="text-sm font-semibold">2. Evento observado</h3>
-          <div className="grid gap-3 md:grid-cols-4">{field("occurred_at", "Data e hora", "datetime-local")}{field("water_depth_m", "Profundidade (m)", "number", "any")}{field("duration_min", "Duração (min)", "number", "any")}{field("observed_rain_mm", "Chuva observada (mm)", "number", "any")}</div>
+          <div className="grid gap-3 md:grid-cols-4">{field("occurred_at", "Data e hora", "datetime-local")}{field("water_depth_m", "Profundidade (m)", "number", "any")}{field("flooded_extent_m", "Extensão alagada (m)", "number", "any")}{field("duration_min", "Duração (min)", "number", "any")}</div>
+          <div className="grid gap-3 md:grid-cols-4">{field("observed_rain_mm", "Chuva observada (mm)", "number", "any")}{field("reported_frequency", "Frequência relatada")}{field("weather_conditions", "Condições meteorológicas")}{field("has_drainage_structures", "Bueiros / galerias existentes")}</div>
           <div className="grid gap-3 md:grid-cols-3">{field("river_condition", "Condição do Rio Pomba")}{field("obstructions", "Possíveis obstruções")}{field("damages", "Danos observados")}</div>
           <h3 className="text-sm font-semibold">3. Diagnóstico</h3>
           <div className="grid gap-3 md:grid-cols-3">{field("cause_hypothesis", "Hipótese inicial da causa")}
             <div><Label className="text-xs">Qualidade do dado</Label><select className="h-9 w-full rounded-md border bg-background px-2 text-sm" value={f.data_quality} onChange={(e) => setF({ ...f, data_quality: e.target.value })}>{Object.entries(QUALITY_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
             <div><Label className="text-xs">Situação</Label><select className="h-9 w-full rounded-md border bg-background px-2 text-sm" value={f.diagnosis_status} onChange={(e) => setF({ ...f, diagnosis_status: e.target.value })}>{Object.entries(STATUS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div></div>
+          <div className="flex flex-wrap gap-4 text-xs">
+            <label className="flex items-center gap-1.5"><input type="checkbox" checked={f.traffic_impact} onChange={(e) => setF({ ...f, traffic_impact: e.target.checked })} />Interferência no trânsito</label>
+            <label className="flex items-center gap-1.5"><input type="checkbox" checked={f.needs_inspection} onChange={(e) => setF({ ...f, needs_inspection: e.target.checked })} />Necessita vistoria de campo</label>
+            <label className="flex items-center gap-1.5"><input type="checkbox" checked={f.cause_confirmed} onChange={(e) => setF({ ...f, cause_confirmed: e.target.checked })} />Causa confirmada por investigação técnica</label>
+          </div>
           <div><Label className="text-xs">Observações</Label><Textarea value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
-          <Button type="submit">Salvar ocorrência</Button>
+          <Button type="submit">{editId ? "Salvar alterações" : "Salvar ocorrência"}</Button>
         </form>
       )}
       <Input placeholder="Buscar por código, endereço ou bairro" className="mb-3 max-w-sm" value={q} onChange={(e) => setQ(e.target.value)} />
       {shown.length === 0 ? <Empty>Nenhuma ocorrência cadastrada.</Empty> : (
         <div className="overflow-x-auto rounded-md border bg-card"><table className="w-full text-sm">
           <thead className="bg-muted text-left text-xs uppercase text-muted-foreground"><tr><th className="p-2">Código</th><th>Bairro</th><th>Data</th><th>Prof. (m)</th><th>Situação</th><th>Qualidade</th><th></th></tr></thead>
-          <tbody>{shown.map((r) => <tr key={r.id} className="border-t"><td className="p-2 font-medium">{r.code}</td><td>{r.neighborhood ?? "—"}</td><td>{fmtDate(r.occurred_at)}</td><td className="num">{r.water_depth_m ?? "—"}</td><td>{STATUS[r.diagnosis_status] ?? r.diagnosis_status}</td><td><QualityBadge q={r.data_quality} /></td><td><Button size="sm" variant="ghost" onClick={() => setPrint(r)}>Ficha</Button></td></tr>)}</tbody>
+          <tbody>{shown.map((r) => <tr key={r.id} className="border-t"><td className="p-2 font-medium">{r.code}</td><td>{r.neighborhood ?? "—"}</td><td>{fmtDate(r.occurred_at)}</td><td className="num">{r.water_depth_m ?? "—"}</td><td>{STATUS[r.diagnosis_status] ?? r.diagnosis_status}</td><td><QualityBadge q={r.data_quality} /></td><td className="flex gap-1 py-1"><Button size="sm" variant="ghost" onClick={() => setPrint(r)}>Ficha</Button>{can.edit && <><Button size="sm" variant="ghost" onClick={() => startEdit(r)}>Editar</Button><Button size="sm" variant="ghost" className="text-destructive" onClick={() => softDelete(r.id)}>Arquivar</Button></>}</td></tr>)}</tbody>
         </table></div>
       )}
     </>

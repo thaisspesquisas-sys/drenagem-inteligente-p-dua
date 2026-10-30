@@ -20,46 +20,38 @@ const NAV = [
   { to: "/painel", label: "Dashboard", icon: LayoutDashboard },
   { to: "/mapa", label: "Mapa da cidade", icon: Map },
   { to: "/alagamentos", label: "Pontos de alagamento", icon: Droplets },
+  { to: "/vistorias", label: "Vistorias de campo", icon: ClipboardList },
   { to: "/infraestrutura", label: "Infraestrutura de drenagem", icon: Network },
+  { to: "/topografia", label: "Relevo e topografia", icon: Mountain },
+  { to: "/bacias", label: "Bacias e hidrologia", icon: Waves },
   { to: "/calculos", label: "Cálculos hidráulicos", icon: Calculator },
-  { to: "/simulacoes", label: "Simulações", icon: Activity },
+  { to: "/simulacoes", label: "Simulações e Rio Pomba", icon: Activity },
+  { to: "/alternativas", label: "Comparação de alternativas", icon: GitCompare },
   { to: "/previsao", label: "Previsão do tempo e alertas", icon: CloudRain },
-  { to: "/central-dados", label: "Central de dados", icon: Database },
+  { to: "/qualidade", label: "Qualidade dos dados", icon: ShieldCheck },
+  { to: "/relatorios", label: "Relatórios técnicos", icon: FileText },
   { to: "/revisao", label: "Revisão e aprovação", icon: ClipboardCheck },
+  { to: "/central-dados", label: "Central de dados", icon: Database },
   { to: "/administracao", label: "Administração", icon: Shield },
 ] as const;
-
-const NEXT = [
-  { label: "Vistorias de campo", icon: ClipboardList },
-  { label: "Relevo e topografia", icon: Mountain },
-  { label: "Bacias e hidrologia", icon: Waves },
-  { label: "Comparação de alternativas", icon: GitCompare },
-  { label: "Qualidade dos dados", icon: ShieldCheck },
-  { label: "Relatórios", icon: FileText },
-];
 
 function Shell() {
   const [open, setOpen] = useState(false);
   const { user, roles } = useAuth();
   const navigate = useNavigate();
   const nav = (
-    <nav className="flex h-full flex-col gap-1 p-3 text-sm">
-      <div className="mb-4 px-2 pt-2">
+    <nav className="flex h-full flex-col gap-0.5 p-3 text-sm">
+      <div className="mb-3 px-2 pt-2">
         <div className="text-xs uppercase tracking-widest text-sidebar-foreground/60">Santo Antônio de Pádua — RJ</div>
         <div className="text-lg font-semibold text-sidebar-foreground">Drenagem Inteligente</div>
       </div>
       {NAV.map(({ to, label, icon: Icon }) => (
         <Link key={to} to={to} onClick={() => setOpen(false)}
-          className="flex items-center gap-2 rounded px-2 py-2 text-sidebar-foreground/85 hover:bg-sidebar-accent"
+          className="flex items-center gap-2 rounded px-2 py-1.5 text-sidebar-foreground/85 hover:bg-sidebar-accent"
           activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground font-medium" }}>
-          <Icon className="h-4 w-4" />{label}
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="truncate">{label}</span>
         </Link>
-      ))}
-      <div className="mt-4 px-2 text-xs uppercase tracking-widest text-sidebar-foreground/50">Próximas fases</div>
-      {NEXT.map(({ label, icon: Icon }) => (
-        <div key={label} className="flex items-center gap-2 px-2 py-1.5 text-sidebar-foreground/40" title="Em desenvolvimento">
-          <Icon className="h-4 w-4" />{label}
-        </div>
       ))}
       <div className="mt-auto border-t border-sidebar-border px-2 pt-3 text-xs text-sidebar-foreground/70">
         <div className="truncate">{user?.email}</div>

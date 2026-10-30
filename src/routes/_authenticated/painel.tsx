@@ -15,15 +15,16 @@ function Painel() {
   const [byHood, setByHood] = useState<[string, number][]>([]);
   const [sources, setSources] = useState<{ name: string; institution: string; integration_status: string; updated_at: string; imported_at: string | null }[]>([]);
   useEffect(() => {
-    const count = async (t: "flood_events" | "drainage_links" | "drainage_nodes" | "simulation_runs" | "technical_reviews", f?: (q: any) => any) => {
+    const count = async (t: "flood_events" | "drainage_links" | "drainage_nodes" | "simulation_runs" | "technical_reviews" | "field_inspections" | "reports" | "alert_events", f?: (q: any) => any) => {
       let q: any = supabase.from(t).select("id", { count: "exact", head: true });
       if (f) q = f(q);
       const { count } = await q; return count ?? 0;
     };
     (async () => {
-      const [floods, uninspected, links, incomplete, nodes, simDone, simFail, simPend, revPend] = await Promise.all([
+      const [floods, uninspected, riverInfluence, links, incomplete, nodes, simDone, simFail, simPend, revPend, revApproved, inspections, reportsCount, activeAlerts] = await Promise.all([
         count("flood_events", (q) => q.is("deleted_at", null)),
         count("flood_events", (q) => q.is("deleted_at", null).eq("diagnosis_status", "nao_vistoriado")),
+        count("flood_events", (q) => q.is("deleted_at", null).not("river_condition", "is", null)),
         count("drainage_links", (q) => q.is("deleted_at", null)),
         count("drainage_links", (q) => q.is("deleted_at", null).or("upstream_invert_m.is.null,downstream_invert_m.is.null,length_m.is.null")),
         count("drainage_nodes", (q) => q.is("deleted_at", null)),
@@ -31,8 +32,12 @@ function Painel() {
         count("simulation_runs", (q) => q.eq("status", "falhou")),
         count("simulation_runs", (q) => q.in("status", ["rascunho", "aguardando_dados", "pronta", "em_processamento"])),
         count("technical_reviews", (q) => q.eq("decision", "pendente")),
+        count("technical_reviews", (q) => q.eq("decision", "aprovado")),
+        count("field_inspections", (q) => q.is("deleted_at", null)),
+        count("reports"),
+        count("alert_events", (q) => q.is("acknowledged_at", null)),
       ]);
-      setC({ floods, uninspected, links, incomplete, nodes, simDone, simFail, simPend, revPend });
+      setC({ floods, uninspected, riverInfluence, links, incomplete, nodes, simDone, simFail, simPend, revPend, revApproved, inspections, reportsCount, activeAlerts });
       const { data: fe } = await supabase.from("flood_events").select("neighborhood").is("deleted_at", null);
       const m = new Map<string, number>();
       (fe ?? []).forEach((r) => m.set(r.neighborhood || "Sem bairro", (m.get(r.neighborhood || "Sem bairro") ?? 0) + 1));
@@ -48,12 +53,16 @@ function Painel() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Pontos de alagamento" value={v("floods")} />
         <Stat label="Sem vistoria" value={v("uninspected")} />
+        <Stat label="Vistorias de campo" value={v("inspections")} />
+        <Stat label="Influência do Rio Pomba" value={v("riverInfluence")} hint="Ocorrências c/ condição do rio" />
         <Stat label="Trechos de drenagem" value={v("links")} />
         <Stat label="Trechos com dados incompletos" value={v("incomplete")} hint="Sem cota ou comprimento" />
         <Stat label="Nós cadastrados" value={v("nodes")} />
-        <Stat label="Simulações concluídas" value={v("simDone")} />
-        <Stat label="Simulações com falha" value={v("simFail")} />
+        <Stat label="Simulações pendentes / concluídas" value={`${v("simPend")} / ${v("simDone")}`} hint={`Falhas: ${v("simFail")}`} />
+        <Stat label="Relatórios técnicos" value={v("reportsCount")} />
         <Stat label="Revisões pendentes" value={v("revPend")} />
+        <Stat label="Aprovações técnicas" value={v("revApproved")} />
+        <Stat label="Alertas ativos (não lidos)" value={v("activeAlerts")} />
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="rounded-md border bg-card p-4">

@@ -14,4 +14,30 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("matches all 16 authenticated drainage platform modules", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    const paths = [
+      "/painel",
+      "/mapa",
+      "/alagamentos",
+      "/vistorias",
+      "/infraestrutura",
+      "/topografia",
+      "/bacias",
+      "/calculos",
+      "/simulacoes",
+      "/alternativas",
+      "/previsao",
+      "/qualidade",
+      "/relatorios",
+      "/revisao",
+      "/central-dados",
+      "/administracao",
+    ];
+    for (const p of paths) {
+      const m = router.matchRoutes(p);
+      expect(m.at(-1)?.routeId).toBe(`/_authenticated${p}`);
+    }
+  });
 });

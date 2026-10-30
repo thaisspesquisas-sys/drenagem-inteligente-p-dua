@@ -15,14 +15,20 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdministracaoRouteImport } from './routes/_authenticated/administracao'
 import { Route as AuthenticatedAlagamentosRouteImport } from './routes/_authenticated/alagamentos'
+import { Route as AuthenticatedAlternativasRouteImport } from './routes/_authenticated/alternativas'
+import { Route as AuthenticatedBaciasRouteImport } from './routes/_authenticated/bacias'
 import { Route as AuthenticatedCalculosRouteImport } from './routes/_authenticated/calculos'
 import { Route as AuthenticatedCentralDadosRouteImport } from './routes/_authenticated/central-dados'
 import { Route as AuthenticatedInfraestruturaRouteImport } from './routes/_authenticated/infraestrutura'
 import { Route as AuthenticatedMapaRouteImport } from './routes/_authenticated/mapa'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedPrevisaoRouteImport } from './routes/_authenticated/previsao'
+import { Route as AuthenticatedQualidadeRouteImport } from './routes/_authenticated/qualidade'
+import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedRevisaoRouteImport } from './routes/_authenticated/revisao'
 import { Route as AuthenticatedSimulacoesRouteImport } from './routes/_authenticated/simulacoes'
+import { Route as AuthenticatedTopografiaRouteImport } from './routes/_authenticated/topografia'
+import { Route as AuthenticatedVistoriasRouteImport } from './routes/_authenticated/vistorias'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -55,6 +61,17 @@ const AuthenticatedAlagamentosRoute =
     path: '/alagamentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAlternativasRoute =
+  AuthenticatedAlternativasRouteImport.update({
+    id: '/alternativas',
+    path: '/alternativas',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBaciasRoute = AuthenticatedBaciasRouteImport.update({
+  id: '/bacias',
+  path: '/bacias',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCalculosRoute = AuthenticatedCalculosRouteImport.update({
   id: '/calculos',
   path: '/calculos',
@@ -87,6 +104,16 @@ const AuthenticatedPrevisaoRoute = AuthenticatedPrevisaoRouteImport.update({
   path: '/previsao',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedQualidadeRoute = AuthenticatedQualidadeRouteImport.update({
+  id: '/qualidade',
+  path: '/qualidade',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRevisaoRoute = AuthenticatedRevisaoRouteImport.update({
   id: '/revisao',
   path: '/revisao',
@@ -97,6 +124,16 @@ const AuthenticatedSimulacoesRoute = AuthenticatedSimulacoesRouteImport.update({
   path: '/simulacoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTopografiaRoute = AuthenticatedTopografiaRouteImport.update({
+  id: '/topografia',
+  path: '/topografia',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedVistoriasRoute = AuthenticatedVistoriasRouteImport.update({
+  id: '/vistorias',
+  path: '/vistorias',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -104,14 +141,20 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/administracao': typeof AuthenticatedAdministracaoRoute
   '/alagamentos': typeof AuthenticatedAlagamentosRoute
+  '/alternativas': typeof AuthenticatedAlternativasRoute
+  '/bacias': typeof AuthenticatedBaciasRoute
   '/calculos': typeof AuthenticatedCalculosRoute
   '/central-dados': typeof AuthenticatedCentralDadosRoute
   '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/previsao': typeof AuthenticatedPrevisaoRoute
+  '/qualidade': typeof AuthenticatedQualidadeRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/revisao': typeof AuthenticatedRevisaoRoute
   '/simulacoes': typeof AuthenticatedSimulacoesRoute
+  '/topografia': typeof AuthenticatedTopografiaRoute
+  '/vistorias': typeof AuthenticatedVistoriasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -119,14 +162,20 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/administracao': typeof AuthenticatedAdministracaoRoute
   '/alagamentos': typeof AuthenticatedAlagamentosRoute
+  '/alternativas': typeof AuthenticatedAlternativasRoute
+  '/bacias': typeof AuthenticatedBaciasRoute
   '/calculos': typeof AuthenticatedCalculosRoute
   '/central-dados': typeof AuthenticatedCentralDadosRoute
   '/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/mapa': typeof AuthenticatedMapaRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/previsao': typeof AuthenticatedPrevisaoRoute
+  '/qualidade': typeof AuthenticatedQualidadeRoute
+  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/revisao': typeof AuthenticatedRevisaoRoute
   '/simulacoes': typeof AuthenticatedSimulacoesRoute
+  '/topografia': typeof AuthenticatedTopografiaRoute
+  '/vistorias': typeof AuthenticatedVistoriasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -136,14 +185,20 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/administracao': typeof AuthenticatedAdministracaoRoute
   '/_authenticated/alagamentos': typeof AuthenticatedAlagamentosRoute
+  '/_authenticated/alternativas': typeof AuthenticatedAlternativasRoute
+  '/_authenticated/bacias': typeof AuthenticatedBaciasRoute
   '/_authenticated/calculos': typeof AuthenticatedCalculosRoute
   '/_authenticated/central-dados': typeof AuthenticatedCentralDadosRoute
   '/_authenticated/infraestrutura': typeof AuthenticatedInfraestruturaRoute
   '/_authenticated/mapa': typeof AuthenticatedMapaRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/previsao': typeof AuthenticatedPrevisaoRoute
+  '/_authenticated/qualidade': typeof AuthenticatedQualidadeRoute
+  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/revisao': typeof AuthenticatedRevisaoRoute
   '/_authenticated/simulacoes': typeof AuthenticatedSimulacoesRoute
+  '/_authenticated/topografia': typeof AuthenticatedTopografiaRoute
+  '/_authenticated/vistorias': typeof AuthenticatedVistoriasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -153,14 +208,20 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/administracao'
     | '/alagamentos'
+    | '/alternativas'
+    | '/bacias'
     | '/calculos'
     | '/central-dados'
     | '/infraestrutura'
     | '/mapa'
     | '/painel'
     | '/previsao'
+    | '/qualidade'
+    | '/relatorios'
     | '/revisao'
     | '/simulacoes'
+    | '/topografia'
+    | '/vistorias'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -168,14 +229,20 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/administracao'
     | '/alagamentos'
+    | '/alternativas'
+    | '/bacias'
     | '/calculos'
     | '/central-dados'
     | '/infraestrutura'
     | '/mapa'
     | '/painel'
     | '/previsao'
+    | '/qualidade'
+    | '/relatorios'
     | '/revisao'
     | '/simulacoes'
+    | '/topografia'
+    | '/vistorias'
   id:
     | '__root__'
     | '/'
@@ -184,14 +251,20 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/administracao'
     | '/_authenticated/alagamentos'
+    | '/_authenticated/alternativas'
+    | '/_authenticated/bacias'
     | '/_authenticated/calculos'
     | '/_authenticated/central-dados'
     | '/_authenticated/infraestrutura'
     | '/_authenticated/mapa'
     | '/_authenticated/painel'
     | '/_authenticated/previsao'
+    | '/_authenticated/qualidade'
+    | '/_authenticated/relatorios'
     | '/_authenticated/revisao'
     | '/_authenticated/simulacoes'
+    | '/_authenticated/topografia'
+    | '/_authenticated/vistorias'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -245,6 +318,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlagamentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/alternativas': {
+      id: '/_authenticated/alternativas'
+      path: '/alternativas'
+      fullPath: '/alternativas'
+      preLoaderRoute: typeof AuthenticatedAlternativasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bacias': {
+      id: '/_authenticated/bacias'
+      path: '/bacias'
+      fullPath: '/bacias'
+      preLoaderRoute: typeof AuthenticatedBaciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/calculos': {
       id: '/_authenticated/calculos'
       path: '/calculos'
@@ -287,6 +374,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPrevisaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/qualidade': {
+      id: '/_authenticated/qualidade'
+      path: '/qualidade'
+      fullPath: '/qualidade'
+      preLoaderRoute: typeof AuthenticatedQualidadeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/relatorios': {
+      id: '/_authenticated/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/revisao': {
       id: '/_authenticated/revisao'
       path: '/revisao'
@@ -301,33 +402,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimulacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/topografia': {
+      id: '/_authenticated/topografia'
+      path: '/topografia'
+      fullPath: '/topografia'
+      preLoaderRoute: typeof AuthenticatedTopografiaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/vistorias': {
+      id: '/_authenticated/vistorias'
+      path: '/vistorias'
+      fullPath: '/vistorias'
+      preLoaderRoute: typeof AuthenticatedVistoriasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdministracaoRoute: typeof AuthenticatedAdministracaoRoute
   AuthenticatedAlagamentosRoute: typeof AuthenticatedAlagamentosRoute
+  AuthenticatedAlternativasRoute: typeof AuthenticatedAlternativasRoute
+  AuthenticatedBaciasRoute: typeof AuthenticatedBaciasRoute
   AuthenticatedCalculosRoute: typeof AuthenticatedCalculosRoute
   AuthenticatedCentralDadosRoute: typeof AuthenticatedCentralDadosRoute
   AuthenticatedInfraestruturaRoute: typeof AuthenticatedInfraestruturaRoute
   AuthenticatedMapaRoute: typeof AuthenticatedMapaRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedPrevisaoRoute: typeof AuthenticatedPrevisaoRoute
+  AuthenticatedQualidadeRoute: typeof AuthenticatedQualidadeRoute
+  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedRevisaoRoute: typeof AuthenticatedRevisaoRoute
   AuthenticatedSimulacoesRoute: typeof AuthenticatedSimulacoesRoute
+  AuthenticatedTopografiaRoute: typeof AuthenticatedTopografiaRoute
+  AuthenticatedVistoriasRoute: typeof AuthenticatedVistoriasRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdministracaoRoute: AuthenticatedAdministracaoRoute,
   AuthenticatedAlagamentosRoute: AuthenticatedAlagamentosRoute,
+  AuthenticatedAlternativasRoute: AuthenticatedAlternativasRoute,
+  AuthenticatedBaciasRoute: AuthenticatedBaciasRoute,
   AuthenticatedCalculosRoute: AuthenticatedCalculosRoute,
   AuthenticatedCentralDadosRoute: AuthenticatedCentralDadosRoute,
   AuthenticatedInfraestruturaRoute: AuthenticatedInfraestruturaRoute,
   AuthenticatedMapaRoute: AuthenticatedMapaRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedPrevisaoRoute: AuthenticatedPrevisaoRoute,
+  AuthenticatedQualidadeRoute: AuthenticatedQualidadeRoute,
+  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedRevisaoRoute: AuthenticatedRevisaoRoute,
   AuthenticatedSimulacoesRoute: AuthenticatedSimulacoesRoute,
+  AuthenticatedTopografiaRoute: AuthenticatedTopografiaRoute,
+  AuthenticatedVistoriasRoute: AuthenticatedVistoriasRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
