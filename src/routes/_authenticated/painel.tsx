@@ -34,6 +34,7 @@ import {
   type WeatherCondition,
 } from "@/components/app/WeatherBackdrop";
 import { PADUA } from "@/lib/weather.functions";
+import { InstallAppButton } from "@/components/app/InstallAppPrompt";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
@@ -182,7 +183,7 @@ function Painel() {
         title="Dashboard de Monitoramento e Drenagem"
         description="Integração oficial em tempo real com o INMET (Instituto Nacional de Meteorologia — IBGE 3304706), Estação Automática A604 e modelo horário Open-Meteo."
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link to="/previsao">
               <Button size="sm" variant="default" className="gap-1.5">
                 <CloudRain className="h-4 w-4" /> Previsão e Alertas
@@ -194,6 +195,9 @@ function Painel() {
           </div>
         }
       />
+
+      {/* Multi-Platform App Installation Banner */}
+      <InstallAppButton variant="banner" className="mb-5" />
 
       {/* Official INMET Active Warnings Banner */}
       {inmetAlerts.length > 0 && (

@@ -26,6 +26,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, ROLE_LABEL } from "@/hooks/useAuth";
 import { WeatherThemeProvider, WeatherBackdropControls } from "@/components/app/WeatherBackdrop";
+import { InstallAppButton } from "@/components/app/InstallAppPrompt";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -160,8 +161,9 @@ function Shell() {
         })}
       </div>
 
-      {/* User Profile Footer */}
-      <div className="border-t border-sidebar-border bg-black/15 p-3 text-xs">
+      {/* Install App CTA + User Profile Footer */}
+      <div className="border-t border-sidebar-border bg-black/15 p-3 text-xs space-y-2.5">
+        <InstallAppButton variant="sidebar" />
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent font-semibold text-sidebar-foreground ring-1 ring-white/15">
             {userInitial}
@@ -211,7 +213,10 @@ function Shell() {
               <span className="hidden sm:inline"> · Sistema Municipal de Drenagem Urbana e Hidrologia</span>
             </div>
           </div>
-          <WeatherBackdropControls />
+          <div className="flex flex-wrap items-center gap-2">
+            <InstallAppButton variant="header" />
+            <WeatherBackdropControls />
+          </div>
         </header>
 
         <main className="mx-auto max-w-7xl p-4 md:p-8">

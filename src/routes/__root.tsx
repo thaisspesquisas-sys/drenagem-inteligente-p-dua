@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { registerPwaServiceWorker } from "@/components/app/InstallAppPrompt";
 
 function NotFoundComponent() {
   return (
@@ -79,9 +80,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Drenagem Inteligente Pádua" },
       { name: "description", content: "Plataforma técnica de drenagem urbana de Santo Antônio de Pádua — RJ." },
+      { name: "theme-color", content: "#0f2744" },
+      { name: "application-name", content: "Drenagem Pádua" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Drenagem Pádua" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { property: "og:title", content: "Drenagem Inteligente Pádua" },
       { property: "og:description", content: "Plataforma técnica de drenagem urbana de Santo Antônio de Pádua — RJ." },
       { property: "og:type", content: "website" },
@@ -93,7 +100,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/icon.svg", type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" },
     ],
@@ -122,6 +132,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
+    registerPwaServiceWorker();
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();

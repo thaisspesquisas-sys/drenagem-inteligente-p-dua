@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InstallAppButton } from "@/components/app/InstallAppPrompt";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -70,6 +71,9 @@ function AuthPage() {
               : <><button type="button" onClick={() => setMode("up")}>Criar conta</button><button type="button" onClick={() => setMode("forgot")}>Esqueci a senha</button></>}
           </div>
           {mode === "up" && <p className="text-xs text-muted-foreground">Novas contas não recebem permissões automaticamente: um administrador deve atribuir o perfil.</p>}
+          <div className="pt-3 border-t">
+            <InstallAppButton variant="auth" />
+          </div>
         </form>
       </div>
     </div>
